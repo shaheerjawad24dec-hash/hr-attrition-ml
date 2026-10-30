@@ -1,0 +1,142 @@
+{
+  "dataset": "IBM HR Analytics Employee Attrition & Performance (Kaggle)",
+  "dataset_url": "https://www.kaggle.com/datasets/pavansubhasht/ibm-hr-analytics-attrition-dataset",
+  "rows": 1470,
+  "random_state": 42,
+  "test_fraction": 0.2,
+  "sklearn_version": "1.9.1",
+  "pandas_version": "3.0.5",
+  "numpy_version": "2.5.3",
+  "joblib_version": "1.6.0",
+  "choices": {
+    "OverTime": [
+      "No",
+      "Yes"
+    ],
+    "BusinessTravel": [
+      "Non-Travel",
+      "Travel_Frequently",
+      "Travel_Rarely"
+    ],
+    "JobRole": [
+      "Healthcare Representative",
+      "Human Resources",
+      "Laboratory Technician",
+      "Manager",
+      "Manufacturing Director",
+      "Research Director",
+      "Research Scientist",
+      "Sales Executive",
+      "Sales Representative"
+    ]
+  },
+  "attrition": {
+    "task": "classification",
+    "question": "Will this employee leave? (Attrition = Yes)",
+    "chosen_model": "LogisticRegression",
+    "selection_rule": "highest 5-fold CV ROC-AUC; simplest model within 1% wins",
+    "cv_roc_auc": {
+      "LogisticRegression": 0.8234492939008033,
+      "RandomForestClassifier": 0.8097863486589107,
+      "GradientBoostingClassifier": 0.8248828115512593
+    },
+    "decision_threshold": 0.55,
+    "threshold_rule": "highest threshold reaching 70% recall on out-of-fold training predictions",
+    "numeric_features": [
+      "JobLevel",
+      "MonthlyIncome",
+      "TotalWorkingYears",
+      "YearsAtCompany",
+      "YearsWithCurrManager",
+      "StockOptionLevel",
+      "JobSatisfaction",
+      "EnvironmentSatisfaction",
+      "WorkLifeBalance",
+      "JobInvolvement",
+      "DistanceFromHome",
+      "NumCompaniesWorked"
+    ],
+    "categorical_features": [
+      "OverTime",
+      "BusinessTravel",
+      "JobRole"
+    ],
+    "train_samples": 1176,
+    "test_samples": 294,
+    "test_positive_rate": 0.1598639455782313,
+    "test": {
+      "roc_auc": 0.7694891894220002,
+      "accuracy": 0.7789115646258503,
+      "precision": 0.3815789473684211,
+      "recall": 0.6170212765957447,
+      "f1": 0.4715447154471545,
+      "confusion_matrix": {
+        "tn": 200,
+        "fp": 47,
+        "fn": 18,
+        "tp": 29
+      },
+      "baseline_accuracy_always_stay": 0.8401360544217686
+    },
+    "top_drivers": [
+      {
+        "feature": "JobRole = Research Director",
+        "coefficient": -1.65
+      },
+      {
+        "feature": "JobRole = Sales Representative",
+        "coefficient": 1.54
+      },
+      {
+        "feature": "JobRole = Laboratory Technician",
+        "coefficient": 0.98
+      },
+      {
+        "feature": "BusinessTravel = Non-Travel",
+        "coefficient": -0.973
+      },
+      {
+        "feature": "OverTime = No",
+        "coefficient": -0.864
+      },
+      {
+        "feature": "TotalWorkingYears",
+        "coefficient": -0.816
+      }
+    ]
+  },
+  "salary": {
+    "task": "regression",
+    "question": "What monthly income (USD) fits this role and experience?",
+    "chosen_model": "GradientBoostingRegressor",
+    "selection_rule": "lowest 5-fold CV MAE; simplest model within 1% wins",
+    "cv_mae": {
+      "LinearRegression": 858.6315010051503,
+      "GradientBoostingRegressor": 765.3845182265828,
+      "RandomForestRegressor": 765.2615179436393
+    },
+    "cv_r2": {
+      "LinearRegression": 0.9417569700609179,
+      "GradientBoostingRegressor": 0.9514877042343773,
+      "RandomForestRegressor": 0.9499658167739116
+    },
+    "numeric_features": [
+      "JobLevel",
+      "TotalWorkingYears",
+      "YearsAtCompany",
+      "YearsInCurrentRole",
+      "Education"
+    ],
+    "categorical_features": [
+      "JobRole"
+    ],
+    "train_samples": 1176,
+    "test_samples": 294,
+    "test": {
+      "r2": 0.9450590265648555,
+      "mae": 802.0948144338921,
+      "rmse": 1095.7907770390873,
+      "baseline_mae_predict_mean": 3386.518788467768
+    }
+  }
+}

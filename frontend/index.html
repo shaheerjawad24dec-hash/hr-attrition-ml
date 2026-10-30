@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Employee attrition risk and salary benchmark predictions">
+  <title>TalentKeep HR Analytics</title>
+  <style>
+    :root {
+      --ink: #1d2433;
+      --muted: #5d6676;
+      --line: #dde1e8;
+      --bg: #f4f5f7;
+      --card: #ffffff;
+      --brand: #0f5b5c;
+      --brand-soft: #e3f0ef;
+      --high: #b42318;
+      --high-soft: #fdecea;
+      --mid: #a15c07;
+      --mid-soft: #fdf3e2;
+      --low: #1d7a46;
+      --low-soft: #e6f4ec;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+    header { background: var(--brand); color: #fff; }
+    header .wrap { display: flex; justify-content: space-between; align-items: center; padding-top: 14px; padding-bottom: 14px; }
+    header strong { font-size: 17px; letter-spacing: .2px; }
+    header a { color: #fff; font-size: 14px; }
+    h1 { font-size: 28px; margin: 28px 0 6px; }
+    h2 { font-size: 19px; margin: 0 0 4px; }
+    h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin: 18px 0 8px; }
+    p { margin: 0 0 10px; }
+    .lead { color: var(--muted); max-width: 760px; }
+
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 20px 0 24px; }
+    .stat { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+    .stat span { display: block; font-size: 12px; color: var(--muted); }
+    .stat b { font-size: 22px; font-variant-numeric: tabular-nums; }
+
+    .cards { display: grid; grid-template-columns: 1.35fr 1fr; gap: 20px; align-items: start; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+    .card > p { color: var(--muted); font-size: 14px; }
+
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 12px; }
+    .grid.two { grid-template-columns: repeat(2, 1fr); }
+    .wide { grid-column: 1 / -1; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+    label small { font-weight: 400; color: var(--muted); }
+    input, select {
+      width: 100%; padding: 8px 9px; font: inherit; color: inherit;
+      border: 1px solid #c4cad4; border-radius: 7px; background: #fff;
+    }
+    input:focus, select:focus, button:focus, a:focus { outline: 3px solid #7cc4c1; outline-offset: 1px; }
+    button {
+      margin-top: 16px; width: 100%; padding: 11px; font: inherit; font-weight: 600;
+      color: #fff; background: var(--brand); border: 0; border-radius: 8px; cursor: pointer;
+    }
+    button:disabled { opacity: .6; cursor: wait; }
+
+    .result { margin-top: 16px; border-radius: 10px; padding: 14px 16px; background: var(--brand-soft); min-height: 64px; }
+    .result small { display: block; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+    .result strong { font-size: 22px; }
+    .result.error { background: var(--high-soft); }
+    .result.error strong { font-size: 15px; color: var(--high); }
+    .result.High { background: var(--high-soft); }
+    .result.Medium { background: var(--mid-soft); }
+    .result.Low { background: var(--low-soft); }
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 99px; font-size: 13px; font-weight: 700; color: #fff; margin-left: 8px; vertical-align: middle; }
+    .badge.High { background: var(--high); }
+    .badge.Medium { background: var(--mid); }
+    .badge.Low { background: var(--low); }
+    .bar { position: relative; height: 10px; background: #fff; border-radius: 99px; margin: 10px 0 4px; overflow: hidden; }
+    .bar i { position: absolute; inset: 0 auto 0 0; background: currentColor; border-radius: 99px; }
+    .bar b { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink); }
+    .detail { font-size: 14px; color: var(--muted); margin-top: 6px; }
+    .detail ul { margin: 4px 0 0; padding-left: 18px; color: var(--ink); }
+
+    .perf { margin-top: 20px; }
+    .perf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; font-variant-numeric: tabular-nums; }
+    th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+    th { font-size: 12px; color: var(--muted); font-weight: 600; }
+    tr.chosen td { font-weight: 700; }
+    .cm td, .cm th { text-align: center; }
+    footer { color: var(--muted); font-size: 13px; padding: 28px 0 40px; }
+
+    @media (max-width: 900px) {
+      .cards, .perf-grid { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 520px) {
+      .grid, .grid.two { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 23px; }
+      .card { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <strong>TalentKeep HR Analytics</strong>
+      <nav><a href="/docs" target="_blank" rel="noopener">API docs &#8599;</a></nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <h1>Retain people, pay them fairly</h1>
+    <p class="lead">Two machine learning models trained on the Kaggle IBM HR Analytics
+      dataset (1,470 employees). The classifier flags employees likely to leave so HR
+      can act early; the regressor benchmarks monthly pay for a role and experience level.</p>
+
+    <section class="stats" aria-label="Measured model scores">
+      <div class="stat"><span>Attrition ROC-AUC (test)</span><b id="m-auc">&ndash;</b></div>
+      <div class="stat"><span>Leavers caught (test recall)</span><b id="m-recall">&ndash;</b></div>
+      <div class="stat"><span>Salary R&#178; (test)</span><b id="m-r2">&ndash;</b></div>
+      <div class="stat"><span>Salary typical error (MAE)</span><b id="m-mae">&ndash;</b></div>
+    </section>
+
+    <div class="cards">
+      <section class="card" aria-labelledby="attrition-title">
+        <h2 id="attrition-title">1 &middot; Attrition risk <small>(classification)</small></h2>
+        <p>Enter one employee's details. The model returns the probability that they leave.</p>
+        <form id="attrition-form">
+          <h3>Role and pay</h3>
+          <div class="grid">
+            <div class="wide">
+              <label for="a-role">Job role</label>
+              <select id="a-role" name="job_role" class="role-select" required></select>
+            </div>
+            <div>
+              <label for="a-level">Job level <small>1&ndash;5</small></label>
+              <input id="a-level" name="job_level" type="number" min="1" max="5" step="1" value="1" required>
+            </div>
+            <div>
+              <label for="a-income">Monthly income <small>USD</small></label>
+              <input id="a-income" name="monthly_income" type="number" min="1000" max="20000" step="1" value="2500" required>
+            </div>
+            <div>
+              <label for="a-stock">Stock option level <small>0&ndash;3</small></label>
+              <input id="a-stock" name="stock_option_level" type="number" min="0" max="3" step="1" value="0" required>
+            </div>
+          </div>
+
+          <h3>Experience</h3>
+          <div class="grid">
+            <div>
+              <label for="a-total">Total working years</label>
+              <input id="a-total" name="total_working_years" type="number" min="0" max="40" step="1" value="3" required>
+            </div>
+            <div>
+              <label for="a-years">Years at company</label>
+              <input id="a-years" name="years_at_company" type="number" min="0" max="40" step="1" value="2" required>
+            </div>
+            <div>
+              <label for="a-manager">Years with manager</label>
+              <input id="a-manager" name="years_with_curr_manager" type="number" min="0" max="40" step="1" value="1" required>
+            </div>
+            <div>
+              <label for="a-companies">Previous companies</label>
+              <input id="a-companies" name="num_companies_worked" type="number" min="0" max="10" step="1" value="3" required>
+            </div>
+            <div>
+              <label for="a-distance">Distance from home <small>1&ndash;30</small></label>
+              <input id="a-distance" name="distance_from_home" type="number" min="1" max="30" step="1" value="15" required>
+            </div>
+          </div>
+
+          <h3>Working conditions</h3>
+          <div class="grid">
+            <div>
+              <label for="a-overtime">Works overtime</label>
+              <select id="a-overtime" name="over_time">
+                <option value="Yes" selected>Yes</option>
+                <option value="No">No</option>
+              </select>
+            </div>
+            <div>
+              <label for="a-travel">Business travel</label>
+              <select id="a-travel" name="business_travel">
+                <option value="Non-Travel">None</option>
+                <option value="Travel_Rarely">Rarely</option>
+                <option value="Travel_Frequently" selected>Frequently</option>
+              </select>
+            </div>
+            <div>
+              <label for="a-wlb">Work-life balance</label>
+              <select id="a-wlb" name="work_life_balance">
+                <option value="1">1 &middot; Bad</option>
+                <option value="2" selected>2 &middot; Good</option>
+                <option value="3">3 &middot; Better</option>
+                <option value="4">4 &middot; Best</option>
+              </select>
+            </div>
+            <div>
+              <label for="a-jobsat">Job satisfaction</label>
+              <select id="a-jobsat" name="job_satisfaction" class="scale4" data-default="1"></select>
+            </div>
+            <div>
+              <label for="a-envsat">Environment satisfaction</label>
+              <select id="a-envsat" name="environment_satisfaction" class="scale4" data-default="2"></select>
+            </div>
+            <div>
+              <label for="a-involve">Job involvement</label>
+              <select id="a-involve" name="job_involvement" class="scale4" data-default="2"></select>
+            </div>
+          </div>
+
+          <button type="submit">Predict attrition risk &#8594;</button>
+          <div class="result" id="attrition-result" role="status" aria-live="polite">
+            <small>Result</small><strong>Submit the form to see a prediction.</strong>
+            <div class="detail"></div>
+          </div>
+        </form>
+      </section>
+
+      <section class="card" aria-labelledby="salary-title">
+        <h2 id="salary-title">2 &middot; Salary benchmark <small>(regression)</small></h2>
+        <p>Estimate the monthly income this profile typically earns. Add a current
+          salary to see whether it sits below, within or above the benchmark.</p>
+        <form id="salary-form">
+          <div class="grid two">
+            <div class="wide">
+              <label for="s-role">Job role</label>
+              <select id="s-role" name="job_role" class="role-select" required></select>
+            </div>
+            <div>
+              <label for="s-level">Job level <small>1&ndash;5</small></label>
+              <input id="s-level" name="job_level" type="number" min="1" max="5" step="1" value="2" required>
+            </div>
+            <div>
+              <label for="s-education">Education</label>
+              <select id="s-education" name="education">
+                <option value="1">1 &middot; Below college</option>
+                <option value="2">2 &middot; College</option>
+                <option value="3" selected>3 &middot; Bachelor</option>
+                <option value="4">4 &middot; Master</option>
+                <option value="5">5 &middot; Doctor</option>
+              </select>
+            </div>
+            <div>
+              <label for="s-total">Total working years</label>
+              <input id="s-total" name="total_working_years" type="number" min="0" max="40" step="1" value="8" required>
+            </div>
+            <div>
+              <label for="s-years">Years at company</label>
+              <input id="s-years" name="years_at_company" type="number" min="0" max="40" step="1" value="5" required>
+            </div>
+            <div>
+              <label for="s-role-years">Years in current role</label>
+              <input id="s-role-years" name="years_in_current_role" type="number" min="0" max="40" step="1" value="3" required>
+            </div>
+            <div>
+              <label for="s-current">Current salary <small>optional, USD</small></label>
+              <input id="s-current" name="current_monthly_income" type="number" min="1000" max="20000" step="1" value="4500">
+            </div>
+          </div>
+          <button type="submit">Estimate salary &#8594;</button>
+          <div class="result" id="salary-result" role="status" aria-live="polite">
+            <small>Result</small><strong>Submit the form to see an estimate.</strong>
+            <div class="detail"></div>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <section class="card perf" aria-labelledby="perf-title">
+      <h2 id="perf-title">How the models were chosen and tested</h2>
+      <p class="lead">Each task compared three algorithms with 5-fold cross-validation on the
+        80% training split. The simplest model within 1% of the best score was kept, then scored
+        once on the untouched 20% test split.</p>
+      <div class="perf-grid">
+        <div>
+          <h3>Attrition: cross-validated ROC-AUC</h3>
+          <table id="cv-attrition"><tbody></tbody></table>
+          <h3>Attrition: test confusion matrix</h3>
+          <table class="cm">
+            <thead><tr><th></th><th>Predicted stay</th><th>Predicted leave</th></tr></thead>
+            <tbody>
+              <tr><th>Actually stayed</th><td id="cm-tn">&ndash;</td><td id="cm-fp">&ndash;</td></tr>
+              <tr><th>Actually left</th><td id="cm-fn">&ndash;</td><td id="cm-tp">&ndash;</td></tr>
+            </tbody>
+          </table>
+          <p class="detail" id="threshold-note"></p>
+        </div>
+        <div>
+          <h3>Salary: cross-validated mean absolute error</h3>
+          <table id="cv-salary"><tbody></tbody></table>
+          <p class="detail" id="salary-note"></p>
+        </div>
+      </div>
+    </section>
+
+    <footer>Data: IBM HR Analytics Employee Attrition &amp; Performance (Kaggle, fictional
+      employees created by IBM data scientists). Gender, age and marital status are not used
+      by either model. Predictions support HR conversations; they are not grounds for
+      decisions about any individual.</footer>
+  </main>
+
+  <script>
+    const ROLES = [
+      "Healthcare Representative", "Human Resources", "Laboratory Technician",
+      "Manager", "Manufacturing Director", "Research Director",
+      "Research Scientist", "Sales Executive", "Sales Representative",
+    ];
+    const SCALE = ["Low", "Medium", "High", "Very high"];
+    const LABELS = {
+      JobRole: "Job role", JobLevel: "Job level", MonthlyIncome: "Monthly income",
+      TotalWorkingYears: "Total working years", YearsAtCompany: "Years at company",
+      YearsWithCurrManager: "Years with manager", NumCompaniesWorked: "Previous companies",
+      OverTime: "Overtime", BusinessTravel: "Business travel",
+      DistanceFromHome: "Distance from home", StockOptionLevel: "Stock option level",
+      JobSatisfaction: "Job satisfaction", EnvironmentSatisfaction: "Environment satisfaction",
+      WorkLifeBalance: "Work-life balance", JobInvolvement: "Job involvement",
+    };
+    const usd = (n) => "$" + Math.round(n).toLocaleString("en-US");
+    const pct = (n) => (n * 100).toFixed(1) + "%";
+
+    // Fill the drop-downs that repeat the same options.
+    document.querySelectorAll(".role-select").forEach((select) => {
+      ROLES.forEach((role) => select.add(new Option(role, role)));
+    });
+    document.getElementById("a-role").value = "Sales Representative";
+    document.getElementById("s-role").value = "Sales Executive";
+    document.querySelectorAll(".scale4").forEach((select) => {
+      SCALE.forEach((text, i) => select.add(new Option(`${i + 1} · ${text}`, i + 1)));
+      select.value = select.dataset.default;
+    });
+
+    // Text fields that must stay strings; every other field is sent as a number.
+    const TEXT_FIELDS = ["job_role", "over_time", "business_travel"];
+
+    function connectForm(formId, route, resultId, render) {
+      const form = document.getElementById(formId);
+      const box = document.getElementById(resultId);
+      const title = box.querySelector("strong");
+      const detail = box.querySelector(".detail");
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = form.querySelector("button");
+        const payload = {};
+        for (const [key, value] of new FormData(form)) {
+          if (value === "") continue;  // Optional field left empty: do not send it.
+          payload[key] = TEXT_FIELDS.includes(key) ? value : Number(value);
+        }
+        button.disabled = true;
+        box.className = "result";
+        title.textContent = "Predicting…";
+        detail.replaceChildren();
+        try {
+          const response = await fetch(route, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            const message = Array.isArray(data.detail)
+              ? data.detail.map((d) => {
+                  const field = d.loc.at(-1);
+                  const text = d.msg.replace("Value error, ", "");
+                  return field === "body" ? text : `${field}: ${text}`;  // Cross-field rules have no single field.
+                }).join("; ")
+              : "The server could not make a prediction.";
+            throw new Error(message);
+          }
+          render(data, box, title, detail);
+        } catch (error) {
+          box.className = "result error";
+          title.textContent = error instanceof TypeError
+            ? "Cannot reach the backend. Is uvicorn running?"
+            : error.message;
+        } finally {
+          button.disabled = false;
+        }
+      });
+    }
+
+    connectForm("attrition-form", "/predict/attrition", "attrition-result", (data, box, title, detail) => {
+      box.className = `result ${data.risk_level}`;
+      title.textContent = `${pct(data.attrition_probability)} chance of leaving`;
+      const badge = document.createElement("span");
+      badge.className = `badge ${data.risk_level}`;
+      badge.textContent = `${data.risk_level} risk`;
+      title.append(badge);
+
+      const bar = document.createElement("div");
+      bar.className = "bar";
+      bar.style.color = getComputedStyle(document.documentElement)
+        .getPropertyValue(`--${{ High: "high", Medium: "mid", Low: "low" }[data.risk_level]}`);
+      const fill = document.createElement("i");
+      fill.style.width = pct(data.attrition_probability);
+      const mark = document.createElement("b");
+      mark.style.left = pct(data.threshold);
+      mark.title = "Decision threshold";
+      bar.append(fill, mark);
+
+      const note = document.createElement("div");
+      note.textContent = data.at_risk
+        ? `Above the ${pct(data.threshold)} threshold: schedule a retention conversation.`
+        : `Below the ${pct(data.threshold)} action threshold.`;
+      detail.append(bar, note);
+
+      if (data.top_risk_factors.length) {
+        const intro = document.createElement("div");
+        intro.textContent = "Factors raising risk the most, compared with an average employee:";
+        const list = document.createElement("ul");
+        data.top_risk_factors.forEach((f) => {
+          const li = document.createElement("li");
+          li.textContent = `${LABELS[f.feature] || f.feature}: ${f.value}`;
+          list.append(li);
+        });
+        detail.append(intro, list);
+      }
+    });
+
+    connectForm("salary-form", "/predict/salary", "salary-result", (data, box, title, detail) => {
+      title.textContent = `${usd(data.predicted_monthly_income)} per month`;
+      const range = document.createElement("div");
+      range.textContent = `Typical range ${usd(data.typical_range[0])} – ${usd(data.typical_range[1])} (± test MAE).`;
+      detail.append(range);
+      if (data.pay_position) {
+        const gap = document.createElement("div");
+        const sign = data.gap_percent > 0 ? "+" : "";
+        gap.textContent = `Current ${usd(data.current_monthly_income)} is ${sign}${data.gap_percent}% vs. benchmark: ${data.pay_position}.`;
+        detail.append(gap);
+        box.className = `result ${data.pay_position === "Below benchmark" ? "Medium" : "Low"}`;
+      }
+    });
+
+    function fillTable(id, scores, chosen, format, header) {
+      const body = document.querySelector(`#${id} tbody`);
+      const head = document.createElement("tr");
+      head.innerHTML = `<th>Model</th><th>${header}</th>`;
+      body.replaceChildren(head);
+      for (const [name, value] of Object.entries(scores)) {
+        const row = document.createElement("tr");
+        if (name === chosen) row.className = "chosen";
+        const a = document.createElement("td");
+        const b = document.createElement("td");
+        a.textContent = name + (name === chosen ? "  ✓ chosen" : "");
+        b.textContent = format(value);
+        row.append(a, b);
+        body.append(row);
+      }
+    }
+
+    async function loadMetrics() {
+      try {
+        const response = await fetch("/metrics");
+        if (!response.ok) throw new Error();
+        const m = await response.json();
+        const a = m.attrition, s = m.salary;
+        document.getElementById("m-auc").textContent = a.test.roc_auc.toFixed(3);
+        document.getElementById("m-recall").textContent = pct(a.test.recall);
+        document.getElementById("m-r2").textContent = s.test.r2.toFixed(3);
+        document.getElementById("m-mae").textContent = usd(s.test.mae);
+        fillTable("cv-attrition", a.cv_roc_auc, a.chosen_model, (v) => v.toFixed(3), "ROC-AUC");
+        fillTable("cv-salary", s.cv_mae, s.chosen_model, usd, "MAE / month");
+        for (const k of ["tn", "fp", "fn", "tp"]) {
+          document.getElementById(`cm-${k}`).textContent = a.test.confusion_matrix[k];
+        }
+        const cm = a.test.confusion_matrix;
+        document.getElementById("threshold-note").textContent =
+          `Threshold ${a.decision_threshold} catches ${cm.tp} of ${cm.tp + cm.fn} leavers ` +
+          `while flagging ${cm.tp + cm.fp} of ${a.test_samples} employees. ` +
+          `Precision ${pct(a.test.precision)} vs. ${pct(a.test_positive_rate)} base rate.`;
+        document.getElementById("salary-note").textContent =
+          `Test R² ${s.test.r2.toFixed(3)}, MAE ${usd(s.test.mae)}. Always predicting the ` +
+          `average salary would give MAE ${usd(s.test.baseline_mae_predict_mean)}.`;
+      } catch {
+        document.getElementById("m-auc").textContent = "n/a";
+      }
+    }
+    loadMetrics();
+  </script>
+</body>
+</html>
